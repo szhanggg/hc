@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { needs as seedNeeds, patients as seedPatients, Commitment, Need, Patient } from '../data/seed';
 
 interface AppContextType {
@@ -17,6 +17,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [commitments, setCommitments] = useState<Commitment[]>([]);
   const [lastDonation, setLastDonation] = useState<AppContextType['lastDonation']>(null);
 
+  useEffect(() => {
+    fetch('/api/needs')
+      .then(r => r.json())
+      .then((data: Need[]) => setNeeds(data))
+      .catch(() => {/* keep seed data on failure */});
+  }, []);
+
   const addCommitment = (data: Omit<Commitment, 'id'>, quantity: number): Commitment => {
     const commitment: Commitment = { ...data, id: `c_${Date.now()}` };
     const need = needs.find(n => n.id === data.needId)!;
@@ -26,11 +33,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const fulfillNeed = (needId: string, qty: number) => {
+    // Optimistic update
     setNeeds(prev => prev.map(n =>
       n.id === needId
         ? { ...n, quantityFulfilled: Math.min(n.quantityFulfilled + qty, n.quantityNeeded) }
         : n
     ));
+    // Persist to DB
+    fetch(`/api/needs/${needId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ qty }),
+    }).then(r => r.json()).then((updated: Need) => {
+      setNeeds(prev => prev.map(n => n.id === needId ? { ...n, ...updated } : n));
+    }).catch(console.error);
   };
 
   return (
