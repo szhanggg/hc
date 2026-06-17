@@ -9,16 +9,17 @@ export async function POST(req: Request) {
 
   try {
     body = await req.json();
+    const b = body!;
 
     const result = await classifyDonationWithAI({
-      donorName: body.donorName,
-      itemDescription: body.itemDescription,
-      condition: body.condition,
-      packagingStatus: body.packagingStatus,
-      notes: body.notes,
+      donorName: b.donorName,
+      itemDescription: b.itemDescription ?? '',
+      condition: b.condition,
+      packagingStatus: b.packagingStatus,
+      notes: b.notes,
       rulesText,
-      photoBase64: body.photoBase64,
-      photoMimeType: body.photoType,
+      photoBase64: b.photoBase64 ?? null,
+      photoMimeType: b.photoType ?? null,
     });
 
     return NextResponse.json(result);
@@ -27,7 +28,7 @@ export async function POST(req: Request) {
 
     if (body) {
       const fallback = matchDonation({
-        itemDescription: body.itemDescription,
+        itemDescription: body.itemDescription ?? '',
         packaging: body.packagingStatus,
         condition: body.condition,
         category: body.category,

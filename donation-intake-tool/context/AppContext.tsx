@@ -1,0 +1,47 @@
+import React, { createContext, useContext, useState } from 'react';
+import { needs as seedNeeds, patients as seedPatients, Commitment, Need, Patient } from '../data/seed';
+
+interface AppContextType {
+  needs: Need[];
+  patients: Patient[];
+  commitments: Commitment[];
+  lastDonation: { commitment: Commitment; need: Need; quantity: number } | null;
+  addCommitment: (data: Omit<Commitment, 'id'>, quantity: number) => Commitment;
+  fulfillNeed: (needId: string, qty: number) => void;
+}
+
+const AppContext = createContext<AppContextType | null>(null);
+
+export function AppProvider({ children }: { children: React.ReactNode }) {
+  const [needs, setNeeds] = useState<Need[]>(seedNeeds);
+  const [commitments, setCommitments] = useState<Commitment[]>([]);
+  const [lastDonation, setLastDonation] = useState<AppContextType['lastDonation']>(null);
+
+  const addCommitment = (data: Omit<Commitment, 'id'>, quantity: number): Commitment => {
+    const commitment: Commitment = { ...data, id: `c_${Date.now()}` };
+    const need = needs.find(n => n.id === data.needId)!;
+    setCommitments(prev => [...prev, commitment]);
+    setLastDonation({ commitment, need, quantity });
+    return commitment;
+  };
+
+  const fulfillNeed = (needId: string, qty: number) => {
+    setNeeds(prev => prev.map(n =>
+      n.id === needId
+        ? { ...n, quantityFulfilled: Math.min(n.quantityFulfilled + qty, n.quantityNeeded) }
+        : n
+    ));
+  };
+
+  return (
+    <AppContext.Provider value={{ needs, patients: seedPatients, commitments, lastDonation, addCommitment, fulfillNeed }}>
+      {children}
+    </AppContext.Provider>
+  );
+}
+
+export function useApp() {
+  const ctx = useContext(AppContext);
+  if (!ctx) throw new Error('useApp must be used within AppProvider');
+  return ctx;
+}

@@ -21,8 +21,8 @@ export function toCSV(rows: Submission[]) {
         row.donorPhone,
         row.itemDescription,
         row.decision,
-        row.decisionReason,
-        row.reviewerNote || "",
+        row.reason,
+        "",
         row.createdAt
       ]
         .map((v) => `"${String(v || "").replace(/"/g, '""')}"`)
