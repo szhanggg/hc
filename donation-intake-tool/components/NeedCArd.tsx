@@ -1,8 +1,97 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { Need, Patient, isUrgent } from '../data/seed';
+
+function ShareButton({ need }: { need: Need }) {
+  const [copied, setCopied] = useState(false);
+
+  const donateUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/donate/${need.id}`
+    : `/donate/${need.id}`;
+
+  const shareText = `Help families at RMHC Bay Area — ${need.quantityNeeded - need.quantityFulfilled} "${need.name}" still needed at the ${need.house} house. Every donation goes directly to a family. ❤️`;
+
+  function handleNativeShare() {
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      navigator.share({ title: need.name, text: shareText, url: donateUrl }).catch(() => {});
+      return;
+    }
+    setShowMenu(prev => !prev);
+  }
+
+  const [showMenu, setShowMenu] = useState(false);
+
+  const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(donateUrl)}`;
+  const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(donateUrl)}`;
+  const emailUrl = `mailto:?subject=${encodeURIComponent(`Help families at RMHC Bay Area`)}&body=${encodeURIComponent(`${shareText}\n\n${donateUrl}`)}`;
+
+  function copyLink() {
+    navigator.clipboard.writeText(donateUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      setShowMenu(false);
+    });
+  }
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <button
+        onClick={handleNativeShare}
+        title="Share this need"
+        style={{
+          display: 'flex', alignItems: 'center', gap: 5,
+          background: '#F2EFEB', border: 'none', borderRadius: 8,
+          padding: '7px 12px', fontSize: 12, fontWeight: 600,
+          color: '#555', cursor: 'pointer', transition: 'background 0.12s',
+          width: '100%', justifyContent: 'center',
+        }}
+      >
+        <span style={{ fontSize: 13 }}>↗</span> Share
+      </button>
+
+      {showMenu && (
+        <div style={{
+          position: 'absolute', bottom: '110%', left: 0, right: 0,
+          background: '#fff', border: '1px solid #E8E3DE', borderRadius: 10,
+          boxShadow: '0 4px 20px rgba(0,0,0,0.12)', overflow: 'hidden', zIndex: 20,
+        }}>
+          {[
+            { label: '𝕏 / Twitter', href: twitterUrl },
+            { label: '📘 Facebook', href: facebookUrl },
+            { label: '✉️ Email', href: emailUrl },
+          ].map(({ label, href }) => (
+            <a
+              key={label}
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setShowMenu(false)}
+              style={{
+                display: 'block', padding: '9px 14px', fontSize: 13,
+                color: '#333', textDecoration: 'none',
+                borderBottom: '1px solid #F2EFEB',
+              }}
+            >
+              {label}
+            </a>
+          ))}
+          <button
+            onClick={copyLink}
+            style={{
+              display: 'block', width: '100%', padding: '9px 14px',
+              fontSize: 13, color: '#333', background: 'none',
+              border: 'none', textAlign: 'left', cursor: 'pointer',
+            }}
+          >
+            {copied ? '✅ Copied!' : '🔗 Copy link'}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 const RED = '#DA291C';
 
@@ -138,10 +227,12 @@ export default function NeedCard({ need, patient }: { need: Need; patient?: Pati
           background: urgent ? RED : '#1A1A1A',
           color: '#fff', padding: '10px 0', borderRadius: 10,
           fontWeight: 700, fontSize: 14, transition: 'opacity 0.12s',
+          marginBottom: 8,
         }}>
           Donate This Item →
         </Link>
-        <div style={{ textAlign: 'center', marginTop: 5, fontSize: 11, color: '#BBB' }}>
+        <ShareButton need={need} />
+        <div style={{ textAlign: 'center', marginTop: 6, fontSize: 11, color: '#BBB' }}>
           Total still needed: ${(need.unitCost * remaining).toLocaleString()}
         </div>
       </div>

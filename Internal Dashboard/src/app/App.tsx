@@ -4,8 +4,34 @@ import {
   AlertTriangle, Package, CreditCard, X,
   CheckCircle, Clock, Bell, ChevronRight, TrendingDown, Home,
   Utensils, Baby, BookOpen, Gift, Send, Sparkles, RefreshCw,
-  Users, ShieldCheck, MapPin, Mail,
+  Users, ShieldCheck, MapPin, Mail, ArrowUpRight,
 } from "lucide-react";
+
+const INTAKE_API = "http://localhost:3000/api/needs";
+
+const CATEGORY_MAP: Record<string, string> = {
+  "Gift Kits": "other",
+  "Diapers": "hygiene",
+  "School Supplies": "school",
+  "Snack Kits": "food",
+  "Toiletries": "hygiene",
+  "Toys": "toy",
+};
+
+const UNIT_COST_MAP: Record<string, number> = {
+  "Gift Kits": 15,
+  "Diapers": 22,
+  "School Supplies": 25,
+  "Snack Kits": 12,
+  "Toiletries": 8,
+  "Toys": 15,
+};
+
+const HUB_NAME_MAP: Record<string, string> = {
+  stanford: "Stanford",
+  ucsf: "UCSF",
+  oakland: "Oakland",
+};
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -428,6 +454,33 @@ export default function App() {
   const [hoveredHub, setHoveredHub]       = useState<HubId | null>(null);
   const [hoveredRiskHub, setHoveredRiskHub] = useState<HubId | null>(null);
   const [showAIModal, setShowAIModal]     = useState(false);
+  const [pushedIds, setPushedIds]         = useState<Set<string>>(new Set());
+  const [pushingId, setPushingId]         = useState<string | null>(null);
+
+  async function pushToIntake(risk: RiskCard) {
+    setPushingId(risk.id);
+    try {
+      await fetch(INTAKE_API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: `risk_${risk.id}`,
+          name: risk.title,
+          house: HUB_NAME_MAP[risk.affectedHub],
+          quantityNeeded: risk.kitsNeeded,
+          unitCost: UNIT_COST_MAP[risk.category] ?? 15,
+          daysOpen: 0,
+          category: CATEGORY_MAP[risk.category] ?? "other",
+          description: `${risk.kitsNeeded} units needed by ${risk.daysUntilDue} days · Sponsor: ${risk.sponsorStatus}`,
+        }),
+      });
+      setPushedIds(prev => new Set([...prev, risk.id]));
+    } catch (err) {
+      console.error("Failed to push to intake:", err);
+    } finally {
+      setPushingId(null);
+    }
+  }
 
   // The hub glow on the map = whichever is most recently hovered (risk card or direct)
   const highlightedHub: HubId | null = hoveredHub ?? hoveredRiskHub;
@@ -725,23 +778,40 @@ export default function App() {
                   </div>
 
                   {/* CTA */}
-                  {isFathersDay ? (
-                    <button
-                      onClick={() => setShowAIModal(true)}
-                      className="w-full flex items-center justify-center gap-2 bg-[#DA291C] hover:bg-[#B8201A] text-white text-sm font-semibold py-2.5 rounded-xl transition-all shadow-sm hover:shadow-md active:scale-[0.98]"
-                    >
-                      <Sparkles className="w-4 h-4" />
-                      Resolve Risk with AI
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => setSelectedHub(risk.affectedHub)}
-                      className="w-full flex items-center justify-center gap-2 bg-[#F4F1EB] hover:bg-[#EDE6DA] text-[#003087] text-sm font-semibold py-2 rounded-xl transition-all"
-                    >
-                      <ChevronRight className="w-4 h-4" />
-                      View {hubMeta.name} Inventory
-                    </button>
-                  )}
+                  <div className="flex flex-col gap-2">
+                    {isFathersDay ? (
+                      <button
+                        onClick={() => setShowAIModal(true)}
+                        className="w-full flex items-center justify-center gap-2 bg-[#DA291C] hover:bg-[#B8201A] text-white text-sm font-semibold py-2.5 rounded-xl transition-all shadow-sm hover:shadow-md active:scale-[0.98]"
+                      >
+                        <Sparkles className="w-4 h-4" />
+                        Resolve Risk with AI
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => setSelectedHub(risk.affectedHub)}
+                        className="w-full flex items-center justify-center gap-2 bg-[#F4F1EB] hover:bg-[#EDE6DA] text-[#003087] text-sm font-semibold py-2 rounded-xl transition-all"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                        View {hubMeta.name} Inventory
+                      </button>
+                    )}
+                    {pushedIds.has(risk.id) ? (
+                      <div className="w-full flex items-center justify-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold py-2 rounded-xl">
+                        <CheckCircle className="w-3.5 h-3.5" />
+                        Added to Donation Intake
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => pushToIntake(risk)}
+                        disabled={pushingId === risk.id}
+                        className="w-full flex items-center justify-center gap-2 bg-[#F4F1EB] hover:bg-[#EDE6DA] text-[#1C1C2E] text-xs font-semibold py-2 rounded-xl transition-all disabled:opacity-50"
+                      >
+                        <ArrowUpRight className="w-3.5 h-3.5" />
+                        {pushingId === risk.id ? "Adding…" : "Push to Donation Intake"}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             );
