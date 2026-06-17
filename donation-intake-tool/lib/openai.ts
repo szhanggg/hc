@@ -86,7 +86,7 @@ Return JSON only with exactly these fields:
       {
         role: "system",
         content:
-          "You are a careful donation intake assistant. Follow policy strictly. Never invent rules. Return valid JSON only.",
+          "You are a careful donation intake assistant. Follow policy strictly. Never invent rules. Return valid JSON only. Also, confidence levels should be between 0 and 100%.",
       },
       { role: "user", content: userContent },
     ],
@@ -95,11 +95,14 @@ Return JSON only with exactly these fields:
   const raw = response.choices[0]?.message?.content?.trim() ?? "";
 
   let parsed: AiClassificationResult;
+
   try {
     parsed = JSON.parse(raw);
   } catch {
     throw new Error(`AI returned invalid JSON: ${raw}`);
   }
+
+  parsed.confidence = parsed.confidence / 100;
 
   return parsed;
 }
