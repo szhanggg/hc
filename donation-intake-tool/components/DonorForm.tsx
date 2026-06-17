@@ -18,6 +18,13 @@ type FormState = {
   manualDecision: "AUTO" | "ACCEPT" | "SOMETIMES" | "DECLINE";
 };
 
+type SubmitResult = {
+  decision: string;
+  reason: string;
+  rule?: string;
+  confidence: number | null;
+};
+
 const initialState: FormState = {
   donorName: "",
   donorEmail: "",
@@ -40,7 +47,7 @@ export default function DonorForm() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<string>("");
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<SubmitResult | null>(null);
 
   const canSubmit = useMemo(() => {
     return (
@@ -95,7 +102,8 @@ export default function DonorForm() {
       });
 
       if (!res.ok) {
-        throw new Error("Submission failed");
+        const errorData = await res.json().catch(() => null);
+        throw new Error(errorData?.error || "Submission failed");
       }
 
       const data = await res.json();
@@ -104,8 +112,8 @@ export default function DonorForm() {
       setForm(initialState);
       setPhoto(null);
       setPhotoPreview(null);
-    } catch (err: any) {
-      setMessage(err.message || "Something went wrong.");
+    } catch (err: unknown) {
+      setMessage(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
       setIsSubmitting(false);
     }

@@ -1,9 +1,6 @@
 import OpenAI from "openai";
-import type { ResponseInputContent } from "openai/resources/responses/responses";
 
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
 
 export type AiClassificationResult = {
   likelyDecision: "ACCEPT" | "SOMETIMES" | "DECLINE";
@@ -24,6 +21,12 @@ export async function classifyDonationWithAI(input: {
   photoBase64?: string | null;
   photoMimeType?: string | null;
 }): Promise<AiClassificationResult> {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error("OPENAI_API_KEY is not configured");
+  }
+
+  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
   const {
     donorName,
     itemDescription,
@@ -35,11 +38,7 @@ export async function classifyDonationWithAI(input: {
     photoMimeType,
   } = input;
 
-  const userContent: ResponseInputContent[] = [
-    {
-      type: "input_text",
-      text: `
-You are helping triage donations for RMHC Bay Area.
+  const prompt = `You are helping triage donations for RMHC Bay Area.
 
 Use the policy exactly as written. If unclear, choose SOMETIMES and ask for human review.
 
@@ -61,45 +60,43 @@ Return JSON only with exactly these fields:
   "matchedRules": string[],
   "needsReview": boolean,
   "questions": string[]
-}
-`,
-    },
-  ];
+}`;
+
+  type ContentPart =
+    | OpenAI.Chat.ChatCompletionContentPartText
+    | OpenAI.Chat.ChatCompletionContentPartImage;
+
+  const userContent: ContentPart[] = [{ type: "text", text: prompt }];
 
   if (photoBase64 && photoMimeType) {
+    const dataUrl = photoBase64.startsWith("data:")
+      ? photoBase64
+      : `data:${photoMimeType};base64,${photoBase64}`;
     userContent.push({
-      type: "input_image",
-      detail: "auto",
-      image_url: photoBase64.startsWith("data:")
-        ? photoBase64
-        : `data:${photoMimeType};base64,${photoBase64}`,
+      type: "image_url",
+      image_url: { url: dataUrl, detail: "low" },
     });
   }
 
-  const response = await client.responses.create({
-    model: "gpt-4.1-mini",
-    input: [
+  const response = await client.chat.completions.create({
+    model: OPENAI_MODEL,
+    max_tokens: 1024,
+    response_format: { type: "json_object" },
+    messages: [
       {
         role: "system",
         content:
           "You are a careful donation intake assistant. Follow policy strictly. Never invent rules. Return valid JSON only.",
       },
-      {
-        role: "user",
-        content: userContent,
-      },
+      { role: "user", content: userContent },
     ],
   });
 
-  const raw = response.output_text?.trim() || "";
-  const text = raw
-    .replace(/^```(?:json)?\s*/i, "")
-    .replace(/\s*```$/, "")
-    .trim();
+  const raw = response.choices[0]?.message?.content?.trim() ?? "";
 
   let parsed: AiClassificationResult;
   try {
-    parsed = JSON.parse(text);
+    parsed = JSON.parse(raw);
   } catch {
     throw new Error(`AI returned invalid JSON: ${raw}`);
   }

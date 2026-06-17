@@ -1,5 +1,3 @@
-import rules from "@/data/rules.json";
-
 export function matchDonation(input: {
   itemDescription: string;
   packaging?: string;
@@ -8,7 +6,6 @@ export function matchDonation(input: {
 }) {
   const text = `${input.itemDescription} ${input.packaging || ""} ${input.condition || ""} ${input.category || ""}`.toLowerCase();
 
-  const declinations = ["stuffed animal", "pop tab", "medical", "used"];
   if (text.includes("stuffed animal")) {
     return {
       decision: "DECLINE",

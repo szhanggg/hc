@@ -1,4 +1,6 @@
-export function toCSV(rows: any[]) {
+import type { Submission } from "@/lib/types";
+
+export function toCSV(rows: Submission[]) {
   const headers = [
     "donor_name",
     "donor_email",

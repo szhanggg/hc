@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { classifyDonationWithAI } from "@/lib/openai";
+import { matchDonation } from "@/lib/rules";
 import { rulesText } from "@/lib/policy";
+import type { Submission } from "@/lib/types";
 
 export async function POST(req: Request) {
+  let body: Submission | undefined;
+
   try {
-    const body = await req.json();
+    body = await req.json();
 
     const result = await classifyDonationWithAI({
       donorName: body.donorName,
@@ -19,8 +23,31 @@ export async function POST(req: Request) {
 
     return NextResponse.json(result);
   } catch (error: unknown) {
+    console.warn("AI classification failed; using local rules.", error);
+
+    if (body) {
+      const fallback = matchDonation({
+        itemDescription: body.itemDescription,
+        packaging: body.packagingStatus,
+        condition: body.condition,
+        category: body.category,
+      });
+
+      return NextResponse.json({
+        likelyDecision: fallback.decision,
+        confidence: 0,
+        reason: `${fallback.reason} AI classification was unavailable, so local policy rules were used.`,
+        matchedRules: [fallback.rule],
+        needsReview: fallback.decision === "SOMETIMES",
+        questions:
+          fallback.decision === "SOMETIMES"
+            ? ["Please ask staff to review this donation."]
+            : [],
+      });
+    }
+
     return NextResponse.json(
-      { error: (error as Error).message || "AI classification failed" },
+      { error: "AI classification failed" },
       { status: 500 }
     );
   }
