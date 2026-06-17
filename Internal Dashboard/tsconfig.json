@@ -18,5 +18,5 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src", "index.tsx", "CalendarTab.tsx", "*.tsx", "*.ts"]
+  "include": ["src", "index.tsx", "src/app/components/CalendarTab.tsx", "*.tsx", "*.ts"]
 }

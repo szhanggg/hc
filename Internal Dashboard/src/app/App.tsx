@@ -1,11 +1,12 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import L from "leaflet";
 import {
   AlertTriangle, Package, CreditCard, X,
   CheckCircle, Clock, Bell, ChevronRight, TrendingDown, Home,
   Utensils, Baby, BookOpen, Gift, Send, Sparkles, RefreshCw,
-  Users, ShieldCheck, MapPin, Mail, ArrowUpRight,
+  Users, ShieldCheck, MapPin, Mail, ArrowUpRight, Calendar,
 } from "lucide-react";
+import CalendarTab, { DriveEvent, AddEventForm, KIT_TYPES, LOCATION_OPTS } from "./components/CalendarTab";
 
 const INTAKE_API = "http://localhost:3000/api/needs";
 
@@ -68,6 +69,7 @@ interface RiskCard {
   coveragePct: number;
   affectedHub: HubId;
   category: string;
+  eventDate?: string;
 }
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
@@ -110,6 +112,7 @@ const RISK_ITEMS: RiskCard[] = [
     coveragePct: 0,
     affectedHub: "stanford",
     category: "Gift Kits",
+    eventDate: "2026-06-21",
   },
   {
     id: "diaper-ucsf",
@@ -121,6 +124,7 @@ const RISK_ITEMS: RiskCard[] = [
     coveragePct: 30,
     affectedHub: "ucsf",
     category: "Diapers",
+    eventDate: "2026-06-30",
   },
   {
     id: "school-oakland",
@@ -132,6 +136,7 @@ const RISK_ITEMS: RiskCard[] = [
     coveragePct: 33,
     affectedHub: "oakland",
     category: "School Supplies",
+    eventDate: "2026-08-21",
   },
   {
     id: "snack-stanford",
@@ -143,7 +148,17 @@ const RISK_ITEMS: RiskCard[] = [
     coveragePct: 20,
     affectedHub: "stanford",
     category: "Snack Kits",
+    eventDate: "2026-07-01",
   },
+];
+
+const INITIAL_EVENTS: DriveEvent[] = [
+  { id:"ev-fathers-day", title:"Father's Day Kits Drive", date:"2026-06-21", location:"stanford", locationLabel:"Stanford", kitType:"Father's Day Kits", iconName:"gift", needed:400, pledged:0, status:"at-risk", planningLeadMonths:3, sponsorStatus:"Gone Quiet / At-Risk", notes:"Primary sponsor unresponsive after 3 outreach attempts since May." },
+  { id:"ev-diaper-ucsf", title:"UCSF Diaper Shortage", date:"2026-06-30", location:"ucsf", locationLabel:"UCSF", kitType:"Diapers", iconName:"baby", needed:280, pledged:84, status:"at-risk", planningLeadMonths:0, sponsorStatus:"No Sponsor Assigned", notes:"Monthly diaper allotment short. No backup assigned." },
+  { id:"ev-snack-stanford", title:"Stanford Snack Kit Restock", date:"2026-07-01", location:"stanford", locationLabel:"Stanford", kitType:"Snack Kits", iconName:"cookie", needed:120, pledged:24, status:"planning", planningLeadMonths:0, sponsorStatus:"Under Review" },
+  { id:"ev-school-oakland", title:"Oakland Back-to-School Kits", date:"2026-08-21", location:"oakland", locationLabel:"Oakland", kitType:"School Supplies", iconName:"grad", needed:100, pledged:33, status:"planning", planningLeadMonths:2, sponsorStatus:"Partial Commitment", notes:"Annual school supply drive. 36% gap remains." },
+  { id:"ev-thanksgiving", title:"Thanksgiving 2026", date:"2026-11-19", location:"all", locationLabel:"All Houses", kitType:"Snack Kits", iconName:"cookie", needed:300, pledged:0, status:"planning", planningLeadMonths:2, notes:"Full coverage in 2025. Start corporate partnerships by September." },
+  { id:"ev-comfort-joy", title:"Comfort & Joy 2026", date:"2026-12-01", location:"all", locationLabel:"All Houses", kitType:"Holiday Toys", iconName:"gift", needed:10000, pledged:0, status:"planning", planningLeadMonths:5, notes:"Largest drive of the year — 10,000 toys across all 3 houses. Corporate toy drives must be confirmed by October." },
 ];
 
 const AI_EMAIL_DRAFT = `Hi Sarah,
@@ -456,6 +471,10 @@ export default function App() {
   const [showAIModal, setShowAIModal]     = useState(false);
   const [pushedIds, setPushedIds]         = useState<Set<string>>(new Set());
   const [pushingId, setPushingId]         = useState<string | null>(null);
+  const [activeTab, setActiveTab]         = useState<"action" | "calendar">("action");
+  const [events, setEvents]               = useState<DriveEvent[]>(INITIAL_EVENTS);
+  const [focusDate, setFocusDate]         = useState<string | null>(null);
+  const [toast, setToast]                 = useState<string | null>(null);
 
   async function pushToIntake(risk: RiskCard) {
     setPushingId(risk.id);
@@ -481,6 +500,27 @@ export default function App() {
       setPushingId(null);
     }
   }
+
+  const handleAddEvent = useCallback((form: AddEventForm) => {
+    const kitInfo = KIT_TYPES.find(k => k.label === form.kitType) || { label: form.kitType, icon: "gift" };
+    const locInfo = LOCATION_OPTS.find(l => l.value === form.location) || { value: "all" as const, label: "All Houses" };
+    const newEvt: DriveEvent = {
+      id: `ev-${Date.now()}`, title: form.title, date: form.date,
+      location: form.location, locationLabel: locInfo.label,
+      kitType: form.kitType, iconName: kitInfo.icon,
+      needed: form.needed, pledged: 0, status: "planning",
+      planningLeadMonths: form.planningLeadMonths,
+      notes: form.notes || undefined,
+    };
+    setEvents(prev => [...prev, newEvt]);
+    setToast(`"${form.title}" added to the calendar`);
+    setTimeout(() => setToast(null), 4000);
+  }, []);
+
+  const handleViewOnCalendar = useCallback((dateStr: string) => {
+    setFocusDate(dateStr);
+    setActiveTab("calendar");
+  }, []);
 
   // The hub glow on the map = whichever is most recently hovered (risk card or direct)
   const highlightedHub: HubId | null = hoveredHub ?? hoveredRiskHub;
@@ -554,8 +594,50 @@ export default function App() {
         </div>
       </header>
 
+      {/* ── TAB NAV ────────────────────────────────────────── */}
+      <div className="bg-white border-b border-[#E5DDD0]">
+        <div className="max-w-[1440px] mx-auto px-6 flex">
+          <button
+            onClick={() => setActiveTab("action")}
+            className={`flex items-center gap-2 px-5 py-3 text-sm font-semibold transition-colors border-b-2 -mb-px ${
+              activeTab === "action"
+                ? "border-[#DA291C] text-[#DA291C]"
+                : "border-transparent text-[#6B6B80] hover:text-[#1C1C2E]"
+            }`}
+          >
+            <AlertTriangle className="w-3.5 h-3.5" /> Action Center
+          </button>
+          <button
+            onClick={() => setActiveTab("calendar")}
+            className={`flex items-center gap-2 px-5 py-3 text-sm font-semibold transition-colors border-b-2 -mb-px ${
+              activeTab === "calendar"
+                ? "border-[#DA291C] text-[#DA291C]"
+                : "border-transparent text-[#6B6B80] hover:text-[#1C1C2E]"
+            }`}
+          >
+            <Calendar className="w-3.5 h-3.5" /> Calendar &amp; Planning
+          </button>
+        </div>
+      </div>
+
+      {/* ── CALENDAR TAB ───────────────────────────────────── */}
+      {activeTab === "calendar" && (
+        <div className="max-w-[1440px] mx-auto px-6 py-6">
+          <CalendarTab
+            events={events}
+            onAddEvent={handleAddEvent}
+            hubFilter={selectedHub ?? "all"}
+            focusDateStr={focusDate}
+            onSwitchToAction={(hub) => {
+              setActiveTab("action");
+              if (hub && hub !== "all") setSelectedHub(hub as HubId);
+            }}
+          />
+        </div>
+      )}
+
       {/* ── MAIN ───────────────────────────────────────────── */}
-      <main className="max-w-[1440px] mx-auto px-6 py-6 grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
+      {activeTab === "action" && <main className="max-w-[1440px] mx-auto px-6 py-6 grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
 
         {/* ════ LEFT COLUMN (60% = 3/5) ═══════════════════ */}
         <div className="lg:col-span-3 flex flex-col gap-5">
@@ -811,6 +893,15 @@ export default function App() {
                         {pushingId === risk.id ? "Adding…" : "Push to Donation Intake"}
                       </button>
                     )}
+                    {risk.eventDate && (
+                      <button
+                        onClick={() => handleViewOnCalendar(risk.eventDate!)}
+                        className="w-full flex items-center justify-center gap-2 bg-[#F4F1EB] hover:bg-[#EDE6DA] text-[#6B6B80] text-xs font-medium py-2 rounded-xl transition-all"
+                      >
+                        <Calendar className="w-3.5 h-3.5" />
+                        View on Calendar
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -835,10 +926,17 @@ export default function App() {
             Data synced today at 9:14 AM · next sync in 6 hrs
           </p>
         </div>
-      </main>
+      </main>}
 
       {/* ── AI Modal ──────────────────────────────────────── */}
       {showAIModal && <AIModal onClose={() => setShowAIModal(false)} />}
+
+      {/* ── Toast ─────────────────────────────────────────── */}
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[500] bg-emerald-600 text-white text-sm font-semibold px-5 py-3 rounded-2xl shadow-xl flex items-center gap-2 whitespace-nowrap">
+          <CheckCircle className="w-4 h-4" />{toast}
+        </div>
+      )}}
 
       <style>{`
         .scrollbar-hide::-webkit-scrollbar { display: none; }
