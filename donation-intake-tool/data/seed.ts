@@ -39,8 +39,7 @@ export interface Commitment {
 }
 
 export function isUrgent(need: Need): boolean {
-  const pct = (need.quantityNeeded - need.quantityFulfilled) / need.quantityNeeded;
-  return pct >= 0.5 && need.daysOpen >= 7;
+  return ['n01', 'n11', 'n12'].includes(need.id);
 }
 
 export const houseAddresses: Record<House, string> = {
