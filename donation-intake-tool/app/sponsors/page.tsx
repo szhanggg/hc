@@ -5,12 +5,14 @@ import Link from 'next/link';
 
 const RED = '#DA291C';
 
+// ─── Leaderboard: top sponsors by kits delivered + confirmed ──────────────────
 const LEADERBOARD = [
   { rank: 1, label: '1st', company: 'Northwind Foods',  kits: 350, kit_type: 'Snack Kits',     since: 'Q1 2026', color: '#B45309', accent: '#FEF3C7', border: '#FDE68A' },
   { rank: 2, label: '2nd', company: 'Lumen Labs',       kits: 300, kit_type: 'Self Care Kits', since: 'Q2 2026', color: '#4B5563', accent: '#F3F4F6', border: '#D1D5DB' },
   { rank: 3, label: '3rd', company: 'Cascade Tech',     kits: 200, kit_type: 'Hygiene Kits',   since: 'Q1 2026', color: '#92400E', accent: '#FFF7ED', border: '#FDBA74' },
 ];
 
+// ─── Current urgent needs (external-facing framing) ───────────────────────────
 const OPEN_NEEDS = [
   {
     id: 'fathers-day',
@@ -62,6 +64,7 @@ const OPEN_NEEDS = [
   },
 ];
 
+// ─── Sub-components ───────────────────────────────────────────────────────────
 function LeaderCard({ entry, pos }: { entry: typeof LEADERBOARD[0]; pos: number }) {
   const isFirst = pos === 0;
   return (
@@ -71,6 +74,7 @@ function LeaderCard({ entry, pos }: { entry: typeof LEADERBOARD[0]; pos: number 
       flex: 1, minWidth: 200,
       transform: isFirst ? 'translateY(-6px)' : 'none',
       boxShadow: isFirst ? '0 8px 32px rgba(0,0,0,0.10)' : '0 2px 8px rgba(0,0,0,0.06)',
+      transition: 'transform 0.15s',
     }}>
       <div style={{ fontSize: isFirst ? 40 : 32, marginBottom: 8, lineHeight: 1 }}>
         {pos === 0 ? '🥇' : pos === 1 ? '🥈' : '🥉'}
@@ -124,6 +128,8 @@ function NeedCard({ need }: { need: typeof OPEN_NEEDS[0] }) {
         <p style={{ margin: '0 0 14px', fontSize: 13, color: '#4B5563', lineHeight: 1.65 }}>
           {need.description}
         </p>
+
+        {/* Progress */}
         <div style={{ marginBottom: 14 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12,
             color: '#6B7280', marginBottom: 5 }}>
@@ -137,15 +143,17 @@ function NeedCard({ need }: { need: typeof OPEN_NEEDS[0] }) {
               background: isUrgent ? RED : '#10B981', transition: 'width .3s' }} />
           </div>
         </div>
+
         <div style={{ fontSize: 12, color: '#9CA3AF' }}>
           ~${need.kitCost}/kit to sponsor · tax-deductible
         </div>
       </div>
+
       <div style={{ padding: '0 20px 18px', display: 'flex', gap: 8 }}>
         <Link href="/wishlist" style={{
           flex: 1, textAlign: 'center', padding: '10px 0',
           background: isUrgent ? RED : '#111827', color: '#fff',
-          borderRadius: 9, fontWeight: 700, fontSize: 13,
+          borderRadius: 9, fontWeight: 700, fontSize: 13, textDecoration: 'none',
         }}>
           Sponsor Kits Online
         </Link>
@@ -153,7 +161,7 @@ function NeedCard({ need }: { need: typeof OPEN_NEEDS[0] }) {
           flex: 1, textAlign: 'center', padding: '10px 0',
           background: 'transparent', color: '#374151',
           border: '1.5px solid #E5E7EB', borderRadius: 9,
-          fontWeight: 600, fontSize: 13,
+          fontWeight: 600, fontSize: 13, textDecoration: 'none',
         }}>
           Organize a Build
         </a>
@@ -162,6 +170,7 @@ function NeedCard({ need }: { need: typeof OPEN_NEEDS[0] }) {
   );
 }
 
+// ─── Main ─────────────────────────────────────────────────────────────────────
 export default function Sponsors() {
   const [emailSent, setEmailSent] = useState(false);
 
@@ -183,6 +192,7 @@ export default function Sponsors() {
             UCSF, and Oakland children&apos;s hospitals — at no cost to the families.
           </p>
 
+          {/* Impact stats */}
           <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 0,
             background: 'rgba(0,0,0,0.18)', borderRadius: 14, padding: '16px 0', marginBottom: 32 }}>
             {[
@@ -204,14 +214,14 @@ export default function Sponsors() {
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link href="/wishlist" style={{
               padding: '13px 28px', background: '#fff', color: RED,
-              borderRadius: 10, fontWeight: 800, fontSize: 15,
+              borderRadius: 10, fontWeight: 800, fontSize: 15, textDecoration: 'none',
             }}>
               Browse Open Needs
             </Link>
             <a href="mailto:volunteer@rmhcbayarea.org?subject=Corporate Sponsorship Inquiry"
               style={{ padding: '13px 28px', background: 'rgba(255,255,255,0.15)', color: '#fff',
                 border: '2px solid rgba(255,255,255,0.4)', borderRadius: 10,
-                fontWeight: 700, fontSize: 15 }}>
+                fontWeight: 700, fontSize: 15, textDecoration: 'none' }}>
               Get in Touch
             </a>
           </div>
@@ -230,13 +240,15 @@ export default function Sponsors() {
               Companies making a difference
             </h2>
           </div>
+
           <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end', marginBottom: 28 }}>
             {LEADERBOARD.map((entry, i) => (
               <LeaderCard key={entry.company} entry={entry} pos={i} />
             ))}
           </div>
+
           <div style={{ textAlign: 'center' }}>
-            <Link href="/wishlist" style={{ fontSize: 14, color: RED, fontWeight: 700 }}>
+            <Link href="/wishlist" style={{ fontSize: 14, color: RED, fontWeight: 700, textDecoration: 'none' }}>
               See your company here — sponsor kits today →
             </Link>
           </div>
@@ -254,7 +266,11 @@ export default function Sponsors() {
             <h2 style={{ margin: '0 0 6px', fontSize: 28, fontWeight: 900, color: '#111827' }}>
               What families need right now
             </h2>
+            <p style={{ margin: 0, fontSize: 15, color: '#6B7280' }}>
+              Click any need to sponsor kits online, or reach out to organize a team kit-build event.
+            </p>
           </div>
+
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 18 }}>
             {OPEN_NEEDS.map(n => <NeedCard key={n.id} need={n} />)}
           </div>
@@ -271,32 +287,47 @@ export default function Sponsors() {
             </h2>
             <p style={{ margin: 0, fontSize: 15, color: '#6B7280' }}>Two ways to give — choose what works for your team.</p>
           </div>
+
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
             {[
               {
-                icon: '💳', title: 'Fund Kits Online',
+                icon: '💳',
+                title: 'Fund Kits Online',
                 steps: ['Browse the open needs wishlist', 'Choose a kit type and quantity', 'Pay securely — receipt sent instantly', 'RMHC purchases and delivers directly'],
-                cta: 'Browse Wishlist', href: '/wishlist', internal: true,
+                cta: 'Browse Wishlist',
+                href: '/wishlist',
+                internal: true,
               },
               {
-                icon: '🏗️', title: 'Organize a Kit Build',
+                icon: '🏗️',
+                title: 'Organize a Kit Build',
                 steps: ['Contact us to pick a need', 'We ship supplies to your office', 'Your team assembles kits together', 'RMHC picks up and delivers to families'],
-                cta: 'Email Us to Start', href: 'mailto:volunteer@rmhcbayarea.org?subject=Kit Build Inquiry', internal: false,
+                cta: 'Email Us to Start',
+                href: 'mailto:volunteer@rmhcbayarea.org?subject=Kit Build Inquiry',
+                internal: false,
               },
             ].map(opt => (
-              <div key={opt.title} style={{ background: '#F9FAFB', borderRadius: 14, padding: '24px 22px', border: '1px solid #E5E7EB' }}>
+              <div key={opt.title} style={{ background: '#F9FAFB', borderRadius: 14,
+                padding: '24px 22px', border: '1px solid #E5E7EB' }}>
                 <div style={{ fontSize: 36, marginBottom: 14 }}>{opt.icon}</div>
-                <h3 style={{ margin: '0 0 16px', fontSize: 18, fontWeight: 800, color: '#111827' }}>{opt.title}</h3>
-                <ol style={{ margin: '0 0 20px', paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <h3 style={{ margin: '0 0 16px', fontSize: 18, fontWeight: 800, color: '#111827' }}>
+                  {opt.title}
+                </h3>
+                <ol style={{ margin: '0 0 20px', paddingLeft: 18, display: 'flex',
+                  flexDirection: 'column', gap: 8 }}>
                   {opt.steps.map(s => (
                     <li key={s} style={{ fontSize: 13, color: '#4B5563', lineHeight: 1.5 }}>{s}</li>
                   ))}
                 </ol>
                 {opt.internal
-                  ? <Link href={opt.href} style={{ display: 'block', textAlign: 'center', padding: '11px 0', background: RED, color: '#fff', borderRadius: 9, fontWeight: 700, fontSize: 14 }}>
+                  ? <Link href={opt.href} style={{ display: 'block', textAlign: 'center',
+                      padding: '11px 0', background: RED, color: '#fff',
+                      borderRadius: 9, fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
                       {opt.cta}
                     </Link>
-                  : <a href={opt.href} style={{ display: 'block', textAlign: 'center', padding: '11px 0', background: '#111827', color: '#fff', borderRadius: 9, fontWeight: 700, fontSize: 14 }}>
+                  : <a href={opt.href} style={{ display: 'block', textAlign: 'center',
+                      padding: '11px 0', background: '#111827', color: '#fff',
+                      borderRadius: 9, fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
                       {opt.cta}
                     </a>
                 }
