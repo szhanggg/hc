@@ -100,6 +100,26 @@ const CAT_LABEL: Record<string, string> = {
   school: '📚 School', toy: '🧸 Toy', other: '✨ Other',
 };
 
+const DONATION_BLURB: Record<string, string> = {
+  n01: "Infants in Palo Alto stay clean and comfortable while their families focus on healing.",
+  n02: "Families in Palo Alto get to start each day feeling fresh and cared for.",
+  n03: "Caregivers in Palo Alto can stay by their child's side without going hungry.",
+  n04: "A child in Palo Alto gets a backpack — and a reason to look forward to school again.",
+  n05: "Something soft and comforting ends up in the arms of a child in Palo Alto.",
+  n06: "Families in Palo Alto get the freedom to choose exactly what they need most.",
+  n07: "Families in San Francisco feel a little more at home, even far from it.",
+  n08: "Everyone in San Francisco wakes up to a warm, nourishing start to the day.",
+  n09: "Children in San Francisco get a calm, creative break from a really hard week.",
+  n10: "Families in San Francisco find a moment to laugh together, no matter how long the stay.",
+  n11: "Clean clothes are one less thing families in San Francisco have to worry about.",
+  n12: "Infants in Oakland stay clean, safe, and comfortable around the clock.",
+  n13: "No family in Oakland has to go hungry between appointments.",
+  n14: "Children in Oakland get to create, imagine, and feel like kids again.",
+  n15: "Every child in Oakland stays warm and comfortable from head to toe.",
+  n16: "Children in Oakland have something to look forward to every single day.",
+  n17: "Families in Oakland can put a real meal on the table, no matter what.",
+};
+
 const HOUSE_STYLE: Record<string, { bg: string; text: string }> = {
   Stanford: { bg: '#E8F4F8', text: '#0369A1' },
   UCSF:     { bg: '#F0FDF4', text: '#15803D' },
@@ -204,18 +224,16 @@ export default function NeedCard({ need, patient }: { need: Need; patient?: Pati
           </div>
         </div>
 
-        {patient && (
+        {DONATION_BLURB[need.id] && (
           <div style={{
             background: '#FEF9F5', border: '1px solid #FECBBB',
             borderRadius: 10, padding: '9px 12px', marginBottom: 2,
           }}>
             <div style={{ fontSize: 10, fontWeight: 700, color: '#B45309', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 3 }}>
-              A family is waiting
+              Your impact
             </div>
             <p style={{ margin: 0, fontSize: 12.5, color: '#444', lineHeight: 1.55 }}>
-              <strong>{patient.firstName ?? patient.name.split(' ')[0]}</strong>, {patient.age}, has been at the {patient.house} house for{' '}
-              <strong>{patient.daysAtHouse ?? need.daysOpen} days</strong> and loves {patient.hobby ?? patient.condition}.{' '}
-              <span style={{ color: '#888' }}>Their house requested this item.</span>
+              {DONATION_BLURB[need.id]}
             </p>
           </div>
         )}
