@@ -1,0 +1,44 @@
+{
+  "global_policy": [
+    "All donated items should be new and in original packaging unless approved otherwise.",
+    "Used items are generally declined unless an exception is listed."
+  ],
+  "accept": [
+    {
+      "item": "Diapers",
+      "conditions": ["new", "unopened", "original packaging"]
+    },
+    {
+      "item": "Activity books",
+      "conditions": ["new"]
+    },
+    {
+      "item": "Baby formula",
+      "conditions": ["new", "unopened", "original packaging"]
+    }
+  ],
+  "sometimes": [
+    {
+      "item": "Furniture",
+      "conditions": ["case-by-case", "photos required", "dimensions required"]
+    },
+    {
+      "item": "Books",
+      "conditions": ["new only", "only if needed"]
+    }
+  ],
+  "decline": [
+    {
+      "item": "Stuffed animals",
+      "conditions": ["always decline"]
+    },
+    {
+      "item": "Pop tabs",
+      "conditions": ["decline and redirect"]
+    },
+    {
+      "item": "Medical items",
+      "conditions": ["generally decline"]
+    }
+  ]
+}
