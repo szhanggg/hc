@@ -9,6 +9,7 @@ import {
 import CalendarTab, { DriveEvent, AddEventForm, KIT_TYPES, LOCATION_OPTS } from "./components/CalendarTab";
 
 const INTAKE_API = "http://localhost:3000/api/needs";
+const EVENTS_API = "http://localhost:3000/api/events";
 
 const CATEGORY_MAP: Record<string, string> = {
   "Gift Kits": "other",
@@ -476,6 +477,13 @@ export default function App() {
   const [focusDate, setFocusDate]         = useState<string | null>(null);
   const [toast, setToast]                 = useState<string | null>(null);
 
+  useEffect(() => {
+    fetch(EVENTS_API)
+      .then(r => r.json())
+      .then((data: DriveEvent[]) => { if (data?.length) setEvents(data); })
+      .catch(() => {});
+  }, []);
+
   async function pushToIntake(risk: RiskCard) {
     setPushingId(risk.id);
     try {
@@ -515,6 +523,11 @@ export default function App() {
     setEvents(prev => [...prev, newEvt]);
     setToast(`"${form.title}" added to the calendar`);
     setTimeout(() => setToast(null), 4000);
+    fetch(EVENTS_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newEvt),
+    }).catch(err => console.error("Failed to save event:", err));
   }, []);
 
   const handleViewOnCalendar = useCallback((dateStr: string) => {

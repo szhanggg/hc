@@ -25,3 +25,19 @@ model Need {
   description       String?
   volunteerBlurb    String?
 }
+
+model CalendarEvent {
+  id                  String  @id
+  title               String
+  date                String
+  location            String
+  locationLabel       String
+  kitType             String
+  iconName            String
+  needed              Int
+  pledged             Int     @default(0)
+  status              String  @default("planning")
+  planningLeadMonths  Int     @default(0)
+  notes               String?
+  sponsorStatus       String?
+}
