@@ -30,7 +30,7 @@ export default function Nav() {
           </div>
           <div>
             <div style={{ fontWeight: 800, fontSize: 14, color: '#1A1A1A', lineHeight: 1.15 }}>RMHC Bay Area</div>
-            <div style={{ fontSize: 10, color: '#999', letterSpacing: 1, textTransform: 'uppercase' }}>Donation Wishlist</div>
+            <div style={{ fontSize: 10, color: '#999', letterSpacing: 1, textTransform: 'uppercase' }}>Arches</div>
           </div>
         </Link>
 

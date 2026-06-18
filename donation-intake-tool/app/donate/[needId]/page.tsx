@@ -205,6 +205,10 @@ function DonateContent() {
                   <label style={LABEL}>Your name (optional)</label>
                   <input value={name} onChange={e => setName(e.target.value)} placeholder="Anonymous" style={INPUT} className="form-input" />
                 </div>
+                <div style={{ marginTop: 12 }}>
+                  <label style={LABEL}>Your email (optional)</label>
+                  <input value={name} onChange={e => setName(e.target.value)} placeholder="anonymous@anon.com" style={INPUT} className="form-input" />
+                </div>
                 <button onClick={handleDropoff} style={{ marginTop: 12, width: '100%', background: RED,
                   color: '#fff', border: 'none', borderRadius: 10, padding: '13px 0',
                   fontWeight: 800, fontSize: 15, cursor: 'pointer' }}>

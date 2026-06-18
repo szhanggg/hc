@@ -574,7 +574,7 @@ export default function App() {
               >
                 RMHC Bay Area
               </h1>
-              <p className="text-[11px] text-blue-200 tracking-widest uppercase">In-Kind Action Center</p>
+              <p className="text-[11px] text-blue-200 tracking-widest uppercase">Action Center</p>
             </div>
           </div>
 
